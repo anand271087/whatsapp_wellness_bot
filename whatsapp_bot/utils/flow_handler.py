@@ -98,35 +98,31 @@ class FlowHandler:
             self.wa_api.send_text(phone, "Sorry, no counselors are available right now.")
             return {"status": "no_counselors"}
             
-        # Use Carousel for Counselor Selection
-        cards = []
+        # Send images for counselors with image URLs
         for c in counselors:
-            # Fallback image if none in sheet
-            img_url = c.get('image_url') or "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080&auto=format&fit=crop"
-            
-            cards.append({
-                "image_url": img_url,
-                "body_text": f"*{c['name']}*\n{c['description'][:60]}...", # Truncate description
-                "buttons": [
-                    {"id": str(c['id']), "title": "Book Now"} # This ID will be returned as message body
-                ]
+            if c.get('image_url'):
+                caption = f"*{c['name']}*\n{c['description']}\nID: {c['id']}"
+                self.wa_api.send_image(phone, c['image_url'], caption)
+        
+        # Then send interactive list for selection
+        rows = []
+        for c in counselors:
+            rows.append({
+                "id": str(c['id']),
+                "title": c['name'][:24],
+                "description": (c['description'][:72] if c['description'] else "Book Now")
             })
         
-        try:
-            self.wa_api.send_interactive_carousel(
-                phone, 
-                "Select a Professional:", 
-                cards[:10] # WhatsApp Limit: 10 cards
-            )
-        except Exception as e:
-            # Fallback to text if carousel fails (e.g., image issue)
-            print(f"Carousel failed: {e}")
-            self.wa_api.send_text(phone, "Please select a counselor ID:")
-            for c in counselors:
-                self.wa_api.send_text(phone, f"{c['id']}. {c['name']}")
+        sections = [{"title": "Select Counselor", "rows": rows}]
+        self.wa_api.send_interactive_list(
+            phone,
+            "Tap below to choose your counselor:",
+            "View Options",
+            sections
+        )
         
         user_sessions[phone]["state"] = STATE_SELECT_COUNSELOR
-        return {"status": "sent_counselor_carousel"}
+        return {"status": "sent_counselors"}
 
     def send_date_selection(self, phone):
         today = datetime.date.today()
