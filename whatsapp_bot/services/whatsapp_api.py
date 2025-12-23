@@ -84,7 +84,7 @@ class WhatsAppAPI:
         }
         return self.send_message(to_phone, payload)
 
-    def send_interactive_buttons(self, to_phone, body_text, buttons):
+    def send_interactive_buttons(self, to_phone, body_text, buttons, header_image_url=None, footer_text=None):
         """
         buttons structure: [{"id": "btn_1", "title": "Button Title"}] (Max 3)
         """
@@ -98,16 +98,29 @@ class WhatsAppAPI:
                 }
             })
 
+        interactive_obj = {
+            "type": "button",
+            "body": {
+                "text": body_text
+            },
+            "action": {
+                "buttons": formatted_buttons
+            }
+        }
+
+        if header_image_url:
+            interactive_obj["header"] = {
+                "type": "image",
+                "image": {"link": header_image_url}
+            }
+        
+        if footer_text:
+            interactive_obj["footer"] = {
+                "text": footer_text
+            }
+
         payload = {
             "type": "interactive",
-            "interactive": {
-                "type": "button",
-                "body": {
-                    "text": body_text
-                },
-                "action": {
-                    "buttons": formatted_buttons
-                }
-            }
+            "interactive": interactive_obj
         }
         return self.send_message(to_phone, payload)
