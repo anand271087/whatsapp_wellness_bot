@@ -100,11 +100,23 @@ class GoogleSheetsService:
         sheet.append_row(row)
 
     def update_booking_payment(self, order_id, status='PAID'):
+        # Legacy support or if order_id is known
         sheet = self.spreadsheet.worksheet('Bookings')
-        # Find cell with order_id
         cell = sheet.find(order_id)
         if cell:
-            # Payment status is column 6 ('F')
             sheet.update_cell(cell.row, 6, status)
+            return True
+        return False
+
+    def update_booking_status(self, booking_id, status, razorpay_order_id=None):
+        """Updates booking status found by booking_id (Col 1)."""
+        sheet = self.spreadsheet.worksheet('Bookings')
+        cell = sheet.find(booking_id)
+        if cell:
+            # Update Payment Status (Col 6)
+            sheet.update_cell(cell.row, 6, status)
+            # Update Order ID (Col 7) if provided
+            if razorpay_order_id:
+                sheet.update_cell(cell.row, 7, razorpay_order_id)
             return True
         return False

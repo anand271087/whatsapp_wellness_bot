@@ -81,7 +81,72 @@ def webhook():
             except Exception as e:
                 logger.error(f"Error processing webhook: {e}")
 
-        return jsonify({"status": "success"}), 200
+@app.route("/payment-webhook", methods=["POST"])
+def payment_webhook():
+    # 1. Get Signature and Secret
+    webhook_secret = os.getenv("RAZORPAY_WEBHOOK_SECRET", "my_hidden_secret")
+    signature = request.headers.get('X-Razorpay-Signature')
+    
+    # 2. Verify Signature
+    if not signature:
+        return jsonify({"error": "Missing Signature"}), 400
+    
+    # Needs raw body for verification
+    try:
+        # Note: If you are using Flask, request.data gives raw body
+        flow_handler.rz_api.client.utility.verify_webhook_signature(
+            request.data.decode('utf-8'),
+            signature,
+            webhook_secret
+        )
+    except Exception as e:
+        logger.error(f"Webhook Signature Verification Failed: {e}")
+        return jsonify({"error": "Invalid Signature"}), 400
+    
+    # 3. Process Event
+    event = request.json
+    if event.get('event') == 'payment_link.paid':
+        try:
+            payload = event.get('payload', {})
+            payment_link = payload.get('payment_link', {})
+            entity = payment_link.get('entity', {})
+            
+            # We stored booking_id in 'notes' -> 'booking_id' OR in 'reference_id'
+            # Let's check 'notes'
+            notes = entity.get('notes', {})
+            booking_id = notes.get('booking_id')
+            
+            # Also get order_id if available
+            order_id = entity.get('order_id') or entity.get('id') # fallback to plink id
+            
+            if booking_id:
+                logger.info(f"Payment Received for Booking: {booking_id}")
+                # Update Sheet
+                # Note: our sheets function expects 'order_id' to find the row. 
+                # But we might have stored a temporary ID or nothing.
+                # Let's assume create_booking_hold used booking_id as reference or we search by booking_id
+                
+                # REFACTOR SHEET UPDATE: We need to update BY booking_id, not order_id, 
+                # because we didn't have a real order_id when we created the row.
+                # Since we don't have a 'update_by_booking_id' method, let's add logic to sheets.py or modify app.py
+                # For now, let's assume update_booking_payment searches by booking_id if we pass it? 
+                # Wait, sheets.py strictly searches 'order_id' column 6? No, wait.
+                # update_booking_payment(order_id, status) -> searches for 'order_id'.
+                # In create_booking_hold, we put 'razorpay_order_id' which was empty?
+                # Ah, we need to fix sheets.py to allow finding by booking_id (Col 1).
+                
+                # Let's implement a direct update here assuming we fix sheets.py next step
+                sheets_service.update_booking_status(booking_id, 'PAID', order_id)
+                
+                # Optional: Send WhatsApp Confirmation
+                phone = entity.get('customer', {}).get('contact')
+                if phone:
+                    flow_handler.wa_api.send_text(phone, f"✅ Payment Received! Your Booking {booking_id} is Confirmed.")
+                    
+        except Exception as e:
+            logger.error(f"Error processing payment event: {e}")
+
+    return jsonify({"status": "ok"}), 200
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
