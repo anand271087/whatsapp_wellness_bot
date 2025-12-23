@@ -13,7 +13,15 @@ class GoogleSheetsService:
 
     def connect(self):
         try:
-            creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials_file, self.scope)
+            # Try Env Var first (Production)
+            json_creds = os.getenv("GOOGLE_CREDENTIALS_JSON")
+            if json_creds:
+                creds_dict = json.loads(json_creds)
+                creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, self.scope)
+            else:
+                # Fallback to local file (Development)
+                creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials_file, self.scope)
+            
             self.client = gspread.authorize(creds)
             try:
                 self.spreadsheet = self.client.open(self.sheet_name)
