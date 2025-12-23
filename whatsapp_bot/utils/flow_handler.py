@@ -113,7 +113,11 @@ class FlowHandler:
             })
         
         try:
-            self.wa_api.send_interactive_carousel(phone, cards[:10]) # WhatsApp Limit: 10 cards
+            self.wa_api.send_interactive_carousel(
+                phone, 
+                "Select a Professional:", 
+                cards[:10] # WhatsApp Limit: 10 cards
+            )
         except Exception as e:
             # Fallback to text if carousel fails (e.g., image issue)
             print(f"Carousel failed: {e}")

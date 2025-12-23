@@ -125,7 +125,7 @@ class WhatsAppAPI:
         }
         return self.send_message(to_phone, payload)
     
-    def send_interactive_carousel(self, to_phone, cards):
+    def send_interactive_carousel(self, to_phone, body_text, cards):
         """
         cards structure:
         [
@@ -137,7 +137,7 @@ class WhatsAppAPI:
         ]
         """
         carousel_cards = []
-        for card in cards:
+        for i, card in enumerate(cards):
             c_buttons = []
             for btn in card.get('buttons', []):
                 c_buttons.append({
@@ -149,6 +149,7 @@ class WhatsAppAPI:
                 })
 
             carousel_cards.append({
+                "card_index": i,
                 "header": {
                     "type": "image",
                     "image": {"link": card['image_url']}
@@ -165,6 +166,9 @@ class WhatsAppAPI:
             "type": "interactive",
             "interactive": {
                 "type": "carousel",
+                "body": {
+                    "text": body_text
+                },
                 "action": {
                     "cards": carousel_cards
                 }
