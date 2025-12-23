@@ -13,13 +13,19 @@ class GoogleSheetsService:
 
     def connect(self):
         try:
-            # Try Env Var first (Production)
+            # 1. Try Env Var (JSON Content)
             json_creds = os.getenv("GOOGLE_CREDENTIALS_JSON")
+            
+            # 2. Try Render Secret File Path
+            render_secret_path = "/etc/secrets/credentials.json"
+            
             if json_creds:
                 creds_dict = json.loads(json_creds)
                 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, self.scope)
+            elif os.path.exists(render_secret_path):
+                creds = ServiceAccountCredentials.from_json_keyfile_name(render_secret_path, self.scope)
             else:
-                # Fallback to local file (Development)
+                # 3. Fallback to local file (Development)
                 creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials_file, self.scope)
             
             self.client = gspread.authorize(creds)
