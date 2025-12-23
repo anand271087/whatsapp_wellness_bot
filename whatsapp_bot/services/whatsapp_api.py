@@ -47,6 +47,15 @@ class WhatsAppAPI:
             "text": {"body": text}
         })
 
+    def send_image(self, to_phone, image_url, caption=None):
+        message_data = {
+            "type": "image",
+            "image": {"link": image_url}
+        }
+        if caption:
+            message_data["image"]["caption"] = caption
+        return self.send_message(to_phone, message_data)
+
     def send_interactive_list(self, to_phone, body_text, button_text, sections):
         """
         sections structure:

@@ -91,10 +91,17 @@ class FlowHandler:
     def start_booking_flow(self, phone):
         counselors = self.sheets.get_active_counselors()
         if not counselors:
-            self.wa_api.send_text(phone, "Sorry, no counselors are currently available.")
+            self.wa_api.send_text(phone, "Sorry, no counselors are available right now.")
             return {"status": "no_counselors"}
+            
+        # 1. Send Image Cards for each Counselor
+        for c in counselors:
+            if c.get('image_url'):
+                # Format: Name - Description
+                caption = f"*{c['name']}*\n{c['description']}"
+                self.wa_api.send_image(phone, c['image_url'], caption)
         
-        # Interactive List for Counselors
+        # 2. Send Selection List
         rows = []
         for c in counselors:
             rows.append({
