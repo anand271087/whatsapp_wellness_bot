@@ -9,7 +9,7 @@ class WhatsAppAPI:
     def __init__(self):
         self.token = os.getenv("WHATSAPP_ACCESS_TOKEN")
         self.phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
-        self.api_version = "v17.0"
+        self.api_version = "v21.0"
         self.base_url = f"https://graph.facebook.com/{self.api_version}/{self.phone_number_id}/messages"
     
     def send_message(self, to_phone, message_data):
