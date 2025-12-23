@@ -81,6 +81,8 @@ def webhook():
             except Exception as e:
                 logger.error(f"Error processing webhook: {e}")
 
+        return jsonify({"status": "success"}), 200
+
 @app.route("/payment-webhook", methods=["POST"])
 def payment_webhook():
     # 1. Get Signature and Secret
