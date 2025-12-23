@@ -38,7 +38,8 @@ class WhatsAppAPI:
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to send WhatsApp message: {e}")
             if e.response:
-                logger.error(e.response.text)
+                logger.error(f"Response Body: {e.response.text}")
+                logger.error(f"Request Payload: {json.dumps(payload, indent=2)}")
             return None
 
     def send_text(self, to_phone, text):
