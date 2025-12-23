@@ -94,33 +94,35 @@ class FlowHandler:
             self.wa_api.send_text(phone, "Sorry, no counselors are available right now.")
             return {"status": "no_counselors"}
             
-        # 1. Send Image Cards for each Counselor
-        for c in counselors:
-            if c.get('image_url'):
-                # Format: Name - Description
-                caption = f"*{c['name']}*\n{c['description']}"
-                self.wa_api.send_image(phone, c['image_url'], caption)
-        
-        # 2. Send Selection List
-        rows = []
-        for c in counselors:
-            rows.append({
-                "id": str(c['id']),
-                "title": c['name'][:24], # Max 24 chars for title
-                "description": c['description'][:72] # Max 72 chars
-            })
+        if not counselors:
+            self.wa_api.send_text(phone, "Sorry, no counselors are available right now.")
+            return {"status": "no_counselors"}
             
-        sections = [{"title": "Available Counselors", "rows": rows}]
+        # Use Carousel for Counselor Selection
+        cards = []
+        for c in counselors:
+            # Fallback image if none in sheet
+            img_url = c.get('image_url') or "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080&auto=format&fit=crop"
+            
+            cards.append({
+                "image_url": img_url,
+                "body_text": f"*{c['name']}*\n{c['description'][:60]}...", # Truncate description
+                "buttons": [
+                    {"id": str(c['id']), "title": "Book Now"} # This ID will be returned as message body
+                ]
+            })
         
-        self.wa_api.send_interactive_list(
-            phone, 
-            "Please select a counselor to proceed:", 
-            "View Counselors", 
-            sections
-        )
+        try:
+            self.wa_api.send_interactive_carousel(phone, cards[:10]) # WhatsApp Limit: 10 cards
+        except Exception as e:
+            # Fallback to text if carousel fails (e.g., image issue)
+            print(f"Carousel failed: {e}")
+            self.wa_api.send_text(phone, "Please select a counselor ID:")
+            for c in counselors:
+                self.wa_api.send_text(phone, f"{c['id']}. {c['name']}")
         
         user_sessions[phone]["state"] = STATE_SELECT_COUNSELOR
-        return {"status": "sent_counselors_list"}
+        return {"status": "sent_counselor_carousel"}
 
     def send_date_selection(self, phone):
         today = datetime.date.today()

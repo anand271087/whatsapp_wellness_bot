@@ -124,3 +124,50 @@ class WhatsAppAPI:
             "interactive": interactive_obj
         }
         return self.send_message(to_phone, payload)
+    
+    def send_interactive_carousel(self, to_phone, cards):
+        """
+        cards structure:
+        [
+            {
+                "image_url": "https://...",
+                "body_text": "Counselor Name",
+                "buttons": [{"id": "btn_id", "title": "Button Title"}]
+            }
+        ]
+        """
+        carousel_cards = []
+        for card in cards:
+            c_buttons = []
+            for btn in card.get('buttons', []):
+                c_buttons.append({
+                    "type": "reply",
+                    "reply": {
+                        "id": btn['id'],
+                        "title": btn['title']
+                    }
+                })
+
+            carousel_cards.append({
+                "header": {
+                    "type": "image",
+                    "image": {"link": card['image_url']}
+                },
+                "body": {
+                    "text": card['body_text']
+                },
+                "action": {
+                    "buttons": c_buttons
+                }
+            })
+
+        payload = {
+            "type": "interactive",
+            "interactive": {
+                "type": "carousel",
+                "action": {
+                    "cards": carousel_cards
+                }
+            }
+        }
+        return self.send_message(to_phone, payload)
