@@ -42,8 +42,8 @@ class FlowHandler:
             # Expecting "Book Appointment" or similar selection
             if "book" in message_body.lower():
                 return self.start_booking_flow(user_phone)
-            else:
-                return self.send_welcome_menu(user_phone)
+            # else: ignore non-commands in START state to avoid spam loop
+            return {"status": "ignored_no_command"}
 
         elif current_state == STATE_SELECT_COUNSELOR:
             # Expecting Counselor Selection (ID or Name)
