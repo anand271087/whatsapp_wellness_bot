@@ -1,6 +1,7 @@
 import logging
 import datetime
 import uuid
+import os
 from services.sheets import GoogleSheetsService
 from services.whatsapp_api import WhatsAppAPI
 from services.razorpay_api import RazorpayAPI
@@ -84,9 +85,18 @@ class FlowHandler:
     # --- RESPONSES ---
 
     def send_welcome_menu(self, phone):
-        msg = "Welcome to the Wellness Center! \nHow can we help you today?\n\nType 'Book' to book a counseling session."
-        self.wa_api.send_text(phone, msg)
-        return {"status": "sent_welcome"}
+        # Use WhatsApp Flow for appointment booking
+        flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
+        
+        self.wa_api.send_flow_message(
+            phone,
+            flow_id=flow_id,
+            flow_cta="Book Appointment",
+            header_text="Welcome! 🌿",
+            body_text="Book your appointment with our expert counselors using our interactive form.",
+            footer_text="Serenity Wellness Center"
+        )
+        return {"status": "sent_flow"}
 
     def start_booking_flow(self, phone):
         counselors = self.sheets.get_active_counselors()
@@ -188,6 +198,50 @@ class FlowHandler:
         
         self.wa_api.send_text(phone, f"Slot Held! Pay ₹500 to confirm:\n{link}")
         return {"status": "sent_payment_link"}
+    
+    def process_flow_booking(self, phone, flow_data):
+        """Process booking from WhatsApp Flow response"""
+        counselor_id = flow_data.get('counselor_id')
+        date_str = flow_data.get('appointment_date')
+        time_slot = flow_data.get('time_slot')
+        
+        if not all([counselor_id, date_str, time_slot]):
+            self.wa_api.send_text(phone, "Error: Incomplete booking data. Please try again.")
+            return
+        
+        # Create booking
+        booking_id = f"BK{int(datetime.datetime.now().timestamp())}"
+        booking_data = {
+            'booking_id': booking_id,
+            'user_phone': phone,
+            'counselor_id': counselor_id,
+            'date': date_str,
+            'time_slot': time_slot,
+            'timestamp': datetime.datetime.now().isoformat()
+        }
+        
+        self.sheets.create_booking_hold(booking_data)
+        
+        # Generate payment link
+        payment_link = self.rz_api.create_payment_link(
+            amount_in_paise=50000,  # ₹500
+            description=f"Booking {booking_id}",
+            customer_phone=phone,
+            reference_id=booking_id
+        )
+        
+        if payment_link:
+            self.wa_api.send_text(
+                phone,
+                f"✅ Booking Created!\n\n"
+                f"ID: {booking_id}\n"
+                f"Date: {date_str}\n"
+                f"Time: {time_slot}\n\n"
+                f"Complete payment: {payment_link}\n\n"
+                f"Your slot is held for 15 minutes."
+            )
+        
+        return {"status": "flow_booking_processed"}
 
     # --- HELPERS ---
     def parse_counselor_selection(self, text):
