@@ -85,18 +85,16 @@ class FlowHandler:
     # --- RESPONSES ---
 
     def send_welcome_menu(self, phone):
-        # Use WhatsApp Flow for appointment booking
-        flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
+        # TEMPORARY: Use simple approach until Flow is debugged
+        # Flow ID: 1540958807595575 (save for later)
         
-        self.wa_api.send_flow_message(
+        self.wa_api.send_interactive_buttons(
             phone,
-            flow_id=flow_id,
-            flow_cta="Book Appointment",
-            header_text="Welcome! 🌿",
-            body_text="Book your appointment with our expert counselors using our interactive form.",
-            footer_text="Serenity Wellness Center"
+            "Welcome to Serenity Wellness Center! 🌿\n\nBook your appointment with our expert counselors.",
+            [{"id": "book_btn", "title": "📅 Book Appointment"}],
+            footer_text="Your wellness journey starts here"
         )
-        return {"status": "sent_flow"}
+        return {"status": "sent_welcome"}
 
     def start_booking_flow(self, phone):
         counselors = self.sheets.get_active_counselors()
