@@ -176,3 +176,45 @@ class WhatsAppAPI:
             }
         }
         return self.send_message(to_phone, payload)
+    
+    def send_flow_message(self, to_phone, flow_id, flow_cta, header_text, body_text, footer_text=None):
+        """
+        Send a WhatsApp Flow message
+        flow_id: The ID of the uploaded Flow (from Meta Business Manager)
+        flow_cta: Call-to-action button text (e.g., "Book Appointment")
+        """
+        interactive_obj = {
+            "type": "flow",
+            "header": {
+                "type": "text",
+                "text": header_text
+            },
+            "body": {
+                "text": body_text
+            },
+            "action": {
+                "name": "flow",
+                "parameters": {
+                    "flow_message_version": "3",
+                    "flow_token": "FLOW_TOKEN",
+                    "flow_id": flow_id,
+                    "flow_cta": flow_cta,
+                    "flow_action": "navigate",
+                    "flow_action_payload": {
+                        "screen": "APPOINTMENT_FORM"
+                    }
+                }
+            }
+        }
+        
+        if footer_text:
+            interactive_obj["footer"] = {
+                "text": footer_text
+            }
+        
+        payload = {
+            "type": "interactive",
+            "interactive": interactive_obj
+        }
+        return self.send_message(to_phone, payload)
+

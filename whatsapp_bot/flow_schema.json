@@ -1,0 +1,102 @@
+{
+    "version": "5.0",
+    "screens": [
+        {
+            "id": "APPOINTMENT_FORM",
+            "title": "Book Appointment",
+            "terminal": true,
+            "data": {},
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "appointment_form",
+                        "children": [
+                            {
+                                "type": "TextHeading",
+                                "text": "Select Your Counselor"
+                            },
+                            {
+                                "type": "RadioButtonsGroup",
+                                "name": "counselor_id",
+                                "label": "Counselor",
+                                "required": true,
+                                "data-source": [
+                                    {
+                                        "id": "1",
+                                        "title": "Dr. Smith",
+                                        "description": "Expert Psychologist",
+                                        "metadata": "Available"
+                                    },
+                                    {
+                                        "id": "2",
+                                        "title": "Dr. Jane",
+                                        "description": "Wellness Coach",
+                                        "metadata": "Available"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "TextHeading",
+                                "text": "Select Date & Time"
+                            },
+                            {
+                                "type": "DatePicker",
+                                "name": "appointment_date",
+                                "label": "Preferred Date",
+                                "required": true,
+                                "min-date": "2025-01-01",
+                                "max-date": "2025-12-31"
+                            },
+                            {
+                                "type": "Dropdown",
+                                "name": "time_slot",
+                                "label": "Time Slot",
+                                "required": true,
+                                "data-source": [
+                                    {
+                                        "id": "09:00",
+                                        "title": "9:00 AM"
+                                    },
+                                    {
+                                        "id": "10:00",
+                                        "title": "10:00 AM"
+                                    },
+                                    {
+                                        "id": "11:00",
+                                        "title": "11:00 AM"
+                                    },
+                                    {
+                                        "id": "14:00",
+                                        "title": "2:00 PM"
+                                    },
+                                    {
+                                        "id": "15:00",
+                                        "title": "3:00 PM"
+                                    },
+                                    {
+                                        "id": "16:00",
+                                        "title": "4:00 PM"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continue",
+                                "on-click-action": {
+                                    "name": "complete",
+                                    "payload": {
+                                        "counselor_id": "${form.counselor_id}",
+                                        "appointment_date": "${form.appointment_date}",
+                                        "time_slot": "${form.time_slot}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
