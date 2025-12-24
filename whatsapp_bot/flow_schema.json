@@ -1,10 +1,11 @@
 {
-    "version": "3.0",
+    "version": "7.3",
     "screens": [
         {
             "id": "APPOINTMENT_FORM",
             "title": "Book Appointment",
             "terminal": true,
+            "success": true,
             "data": {},
             "layout": {
                 "type": "SingleColumnLayout",
@@ -26,14 +27,12 @@
                                     {
                                         "id": "1",
                                         "title": "Dr. Smith",
-                                        "description": "Expert Psychologist",
-                                        "metadata": "Available"
+                                        "description": "Expert Psychologist"
                                     },
                                     {
                                         "id": "2",
                                         "title": "Dr. Jane",
-                                        "description": "Wellness Coach",
-                                        "metadata": "Available"
+                                        "description": "Wellness Coach"
                                     }
                                 ]
                             },
@@ -45,9 +44,7 @@
                                 "type": "DatePicker",
                                 "name": "appointment_date",
                                 "label": "Preferred Date",
-                                "required": true,
-                                "min-date": "2025-01-01",
-                                "max-date": "2025-12-31"
+                                "required": true
                             },
                             {
                                 "type": "Dropdown",
@@ -83,7 +80,7 @@
                             },
                             {
                                 "type": "Footer",
-                                "label": "Continue",
+                                "label": "Complete",
                                 "on-click-action": {
                                     "name": "complete",
                                     "payload": {
