@@ -67,21 +67,21 @@ def webhook():
                         elif interactive.get('type') == 'list_reply':
                             msg_body = interactive.get('list_reply', {}).get('id')
                         elif interactive.get('type') == 'nfm_reply':
-                            # WhatsApp Flow response
+                            # WhatsApp Flow response - process directly
                             nfm_reply = interactive.get('nfm_reply', {})
                             flow_response = json.loads(nfm_reply.get('body', '{}'))
-                            # Flow returns: {"counselor_id": "1", "appointment_date": "2025-01-15", "time_slot": "10:00"}
                             logger.info(f"Flow Response: {flow_response}")
-                            # Process booking directly
                             flow_handler.process_flow_booking(from_number, flow_response)
-                            continue  # Skip normal message handling
+                            # Don't process as regular message
+                            msg_body = None
                         else:
                             msg_body = ""
                     else:
                         msg_body = ""
                     
-                    # Pass to Flow Handler
-                    response = flow_handler.handle_message(from_number, msg_body)
+                    # Pass to Flow Handler (skip if Flow already processed)
+                    if msg_body is not None:
+                        response = flow_handler.handle_message(from_number, msg_body)
                     
                     # For MVP: Log the response we WOULD send
                     # In real app: call send_message(from_number, response)
