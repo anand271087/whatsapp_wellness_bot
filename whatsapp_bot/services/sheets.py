@@ -67,7 +67,7 @@ class GoogleSheetsService:
             b_sheet = self.spreadsheet.add_worksheet(title='Bookings', rows=1000, cols=10)
         
         if not b_sheet.get_all_values():
-            b_sheet.append_row(['booking_id', 'user_phone', 'counselor_id', 'date', 'time_slot', 'payment_status', 'razorpay_order_id', 'timestamp'])
+            b_sheet.append_row(['booking_id', 'user_phone', 'counselor_id', 'date', 'time_slot', 'payment_status', 'razorpay_order_id', 'timestamp', 'booking_status'])
 
     def get_active_counselors(self):
         sheet = self.spreadsheet.worksheet('Counselors')
@@ -95,7 +95,8 @@ class GoogleSheetsService:
             booking_data.get('time_slot'),
             'PENDING', # payment_status
             booking_data.get('razorpay_order_id', ''),
-            booking_data.get('timestamp')
+            booking_data.get('timestamp'),
+            'ACTIVE' # booking_status
         ]
         sheet.append_row(row)
 
@@ -118,5 +119,47 @@ class GoogleSheetsService:
             # Update Order ID (Col 7) if provided
             if razorpay_order_id:
                 sheet.update_cell(cell.row, 7, razorpay_order_id)
+            return True
+        return False
+    
+    def get_user_booking_count(self, user_phone):
+        """Count total PAID bookings for a user (lifetime limit)."""
+        sheet = self.spreadsheet.worksheet('Bookings')
+        records = sheet.get_all_records()
+        count = sum(1 for r in records 
+                   if r.get('user_phone') == user_phone and r.get('payment_status') == 'PAID')
+        return count
+    
+    def get_user_active_bookings(self, user_phone):
+        """Get all ACTIVE bookings with PAID status for a user."""
+        sheet = self.spreadsheet.worksheet('Bookings')
+        records = sheet.get_all_records()
+        active_bookings = [
+            r for r in records 
+            if r.get('user_phone') == user_phone 
+            and r.get('payment_status') == 'PAID'
+            and r.get('booking_status') == 'ACTIVE'
+        ]
+        return active_bookings
+    
+    def update_booking_datetime(self, booking_id, new_date, new_time_slot):
+        """Update date and time for an existing booking (for rescheduling)."""
+        sheet = self.spreadsheet.worksheet('Bookings')
+        cell = sheet.find(booking_id)
+        if cell:
+            # Update Date (Col 4)
+            sheet.update_cell(cell.row, 4, new_date)
+            # Update Time Slot (Col 5)
+            sheet.update_cell(cell.row, 5, new_time_slot)
+            return True
+        return False
+    
+    def cancel_booking(self, booking_id):
+        """Mark a booking as CANCELLED."""
+        sheet = self.spreadsheet.worksheet('Bookings')
+        cell = sheet.find(booking_id)
+        if cell:
+            # Update Booking Status (Col 9)
+            sheet.update_cell(cell.row, 9, 'CANCELLED')
             return True
         return False
