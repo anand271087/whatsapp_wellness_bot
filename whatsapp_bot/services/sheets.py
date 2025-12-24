@@ -31,20 +31,31 @@ class GoogleSheetsService:
             self.client = gspread.authorize(creds)
             try:
                 self.spreadsheet = self.client.open(self.sheet_name)
+                # Ensure schema is up to date even if sheet exists
+                self.ensure_bookings_schema()
             except gspread.SpreadsheetNotFound:
-                # Auto-create if not found (requires Drive API enabled and shared manually or created here)
-                # For simplicity, we'll assume it exists or throw an error. 
-                # Ideally, we create it.
+                # Auto-create if not found
                 self.spreadsheet = self.client.create(self.sheet_name)
                 self.setup_schema()
-                # Need to share this sheet with the user? 
-                # self.spreadsheet.share('user_email@gmail.com', perm_type='user', role='owner')
                 print(f"Created new sheet: {self.sheet_name}")
             
             return True
         except Exception as e:
             print(f"Error connecting to Google Sheets: {e}")
             return False
+
+    def ensure_bookings_schema(self):
+        """Ensure Bookings sheet has all required columns."""
+        try:
+            b_sheet = self.spreadsheet.worksheet('Bookings')
+            headers = b_sheet.row_values(1)
+            if 'booking_status' not in headers:
+                # Add the column header
+                b_sheet.update_cell(1, 9, 'booking_status')
+                # Optional: Backfill existing rows?
+                # For now, our code defaults to ACTIVE so it's fine.
+        except Exception as e:
+            print(f"Error ensuring schema: {e}")
 
     def setup_schema(self):
         """Initializes the sheets with headers if they are empty."""
@@ -138,7 +149,7 @@ class GoogleSheetsService:
             r for r in records 
             if r.get('user_phone') == user_phone 
             and r.get('payment_status') == 'PAID'
-            and r.get('booking_status') == 'ACTIVE'
+            and r.get('booking_status', 'ACTIVE') in ['ACTIVE', '']  # Handle missing/empty column for backward compatibility
         ]
         return active_bookings
     

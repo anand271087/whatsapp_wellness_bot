@@ -55,14 +55,17 @@ class FlowHandler:
             return {"status": "ignored_no_command"}
 
         elif current_state == STATE_SELECT_COUNSELOR:
-            # Expecting Counselor Selection (ID or Name)
-            selected_counselor_id = self.parse_counselor_selection(message_body)
-            if selected_counselor_id:
+            # Expecting Counselor Selection (ID from interactive list)
+            selected_counselor_id = message_body.strip()
+            # Validate that it's a valid counselor ID
+            counselors = self.sheets.get_active_counselors()
+            valid_ids = [str(c['id']) for c in counselors]
+            if selected_counselor_id in valid_ids:
                 user_sessions[user_phone]["data"]["counselor_id"] = selected_counselor_id
                 user_sessions[user_phone]["state"] = STATE_SELECT_DATE
                 return self.send_date_selection(user_phone)
             else:
-                self.wa_api.send_text(user_phone, "Invalid selection. Please reply with the ID of the counselor.")
+                self.wa_api.send_text(user_phone, "Invalid selection. Please select a counselor from the list provided.")
                 return {"status": "error", "msg": "invalid_selection"}
 
         elif current_state == STATE_SELECT_DATE:
@@ -351,6 +354,11 @@ class FlowHandler:
     
     def check_user_status(self, phone):
         """Check user's booking status and return relevant info."""
+        # Simple normalization: remove + if present
+        clean_phone = phone.replace('+', '')
+        # We might need to check both authentic formats if sheet data is mixed
+        # For now, let's assume the sheet stores what was passed in booking.
+        
         booking_count = self.sheets.get_user_booking_count(phone)
         active_bookings = self.sheets.get_user_active_bookings(phone)
         
