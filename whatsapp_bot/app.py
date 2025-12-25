@@ -203,57 +203,44 @@ def flows():
         return jsonify(response_payload)
 
     elif action == "INIT":
-        # Fetch dynamic data for the first screen
+        # Fetch counselors for 'COUNSELLOR_SELECT' screen
         counselors = sheets_service.get_active_counselors()
         
-        # Format for Flow: Flat list for fixed slots
-        counselor_data = []
+        # Format for Flow Schema (id, title, image)
+        department_data = []
         for c in counselors:
-            counselor_data.append({
+            department_data.append({
                 "id": str(c['id']),
                 "title": c['name'],
-                "description": c['description'],
-                "image_url": c['image_url'] 
+                "image": c['image_url'] if c.get('image_url') else "https://via.placeholder.com/150"
             })
             
-        # Ensure we fill at least the slots we have in JSON (e.g. 2-3) or handle in UI
-        # Pass the array, schema references it via index
-        
         response_payload = {
-            "screen": "COUNSELOR_SELECTION", 
+            "screen": "COUNSELLOR_SELECT", 
             "data": {
-                "counselors": counselor_data
+                "department": department_data
             }
         }
         
     elif action == "data_exchange":
         # Handle actions from the Flow
         request_data = decrypted_payload.get("data", {})
-        payload = decrypted_payload
         
-        # Check specific action if nested in payload (depending on client implementation)
-        # Standard: payload is the request body. 
-        # But 'on-click-action' payload merges into the data_exchange request structure?
-        # Actually: request structure is { "action": "data_exchange", "data": { ... payload fields ... }, ... }
+        # New Schema Transition: COUNSELLOR_SELECT -> CONFIRM
+        # Client sends: { "counsellor": "${form.department}" }
+        # Note: 'department' is the ID selected in dropdown
         
-        custom_action = request_data.get("action")
-        
-        if custom_action == "select_counselor":
-            counselor_id = request_data.get("counselor_id")
-            
-            # Transition to Next Screen
-            response_payload = {
-                "screen": "DATE_SELECTION",
-                "data": {
-                    "counselor_id": counselor_id
+        response_payload = {
+            "screen": "SUCCESS", # Close Flow
+            "data": {
+                "extension_message_response": {
+                    "params": {
+                        "flow_token": decrypted_payload.get("flow_token"),
+                        "counsellor_id": request_data.get("counsellor")
+                    }
                 }
             }
-        else:
-            # Default or completion
-            response_payload = {
-                "screen": "SUCCESS", 
-                "data": {}
-            }
+        }
         
     else:
         logger.warning(f"Unknown Flow Action: {action}")

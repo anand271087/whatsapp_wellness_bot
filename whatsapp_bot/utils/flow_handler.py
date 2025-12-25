@@ -215,40 +215,21 @@ class FlowHandler:
             user_sessions[phone] = {"state": STATE_START, "data": {}}
             return {"status": "booking_limit_reached"}
         
-        counselors = self.sheets.get_active_counselors()
-        if not counselors:
-            self.wa_api.send_text(phone, "Sorry, no counselors are available right now.")
-            return {"status": "no_counselors"}
-            
-        if not counselors:
-            self.wa_api.send_text(phone, "Sorry, no counselors are available right now.")
-            return {"status": "no_counselors"}
-            
-        # Send images for counselors with image URLs
-        for c in counselors:
-            if c.get('image_url'):
-                caption = f"*{c['name']}*\n{c['description']}\nID: {c['id']}"
-                self.wa_api.send_image(phone, c['image_url'], caption)
+    def start_booking_flow(self, phone):
+        # 1. Launch Flow Directly for Counselor Selection
+        flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
         
-        # Then send interactive list for selection
-        rows = []
-        for c in counselors:
-            rows.append({
-                "id": str(c['id']),
-                "title": c['name'][:24],
-                "description": (c['description'][:72] if c['description'] else "Book Now")
-            })
-        
-        sections = [{"title": "Select Counselor", "rows": rows}]
-        self.wa_api.send_interactive_list(
+        self.wa_api.send_flow_message(
             phone,
-            "Tap below to choose your counselor:",
-            "View Options",
-            sections
+            flow_id,
+            "Book Appointment",
+            "Book Your Session",
+            "Select your counselor and schedule your appointment.",
+            "Serenity Wellness Center"
         )
         
-        user_sessions[phone]["state"] = STATE_SELECT_COUNSELOR
-        return {"status": "sent_counselors"}
+        # We don't set local state yet, we wait for flow completion
+        return {"status": "sent_flow_start"}
 
     def send_date_selection(self, phone):
         today = datetime.date.today()
@@ -317,47 +298,24 @@ class FlowHandler:
     
     def process_flow_booking(self, phone, flow_data):
         """Process booking from WhatsApp Flow response"""
-        counselor_id = flow_data.get('counselor_id')
-        date_str = flow_data.get('appointment_date')
-        time_slot = flow_data.get('time_slot')
+        # New Flow returns: { "counsellor_id": "..." }
+        counselor_id = flow_data.get('counsellor_id') or flow_data.get('counselor_id')
         
-        if not all([counselor_id, date_str, time_slot]):
-            self.wa_api.send_text(phone, "Error: Incomplete booking data. Please try again.")
+        if not counselor_id:
+            self.wa_api.send_text(phone, "Error: No counselor selected. Please try again.")
             return
+            
+        # Initialize session if needed
+        if phone not in user_sessions:
+            user_sessions[phone] = {"state": STATE_START, "data": {}}
+            
+        # Save Counselor ID
+        user_sessions[phone]["data"]["counselor_id"] = counselor_id
+        user_sessions[phone]["state"] = STATE_SELECT_DATE
         
-        # Create booking
-        booking_id = f"BK{int(datetime.datetime.now().timestamp())}"
-        booking_data = {
-            'booking_id': booking_id,
-            'user_phone': phone,
-            'counselor_id': counselor_id,
-            'date': date_str,
-            'time_slot': time_slot,
-            'timestamp': datetime.datetime.now().isoformat()
-        }
-        
-        self.sheets.create_booking_hold(booking_data)
-        
-        # Generate payment link
-        payment_link = self.rz_api.create_payment_link(
-            amount_in_paise=50000,  # ₹500
-            description=f"Booking {booking_id}",
-            customer_phone=phone,
-            reference_id=booking_id
-        )
-        
-        if payment_link:
-            self.wa_api.send_text(
-                phone,
-                f"✅ Booking Created!\n\n"
-                f"ID: {booking_id}\n"
-                f"Date: {date_str}\n"
-                f"Time: {time_slot}\n\n"
-                f"Complete payment: {payment_link}\n\n"
-                f"Your slot is held for 15 minutes."
-            )
-        
-        return {"status": "flow_booking_processed"}
+        # Acknowledge and Ask for Date (Hybrid approach: Flow -> Interactive Buttons)
+        self.wa_api.send_text(phone, f"Great! You selected counselor ID: {counselor_id}")
+        return self.send_date_selection(phone)
 
     # --- HELPERS ---
     def parse_counselor_selection(self, text):
