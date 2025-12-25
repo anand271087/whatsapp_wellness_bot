@@ -5,3 +5,4 @@ oauth2client
 razorpay
 python-dotenv
 gunicorn
+cryptography
