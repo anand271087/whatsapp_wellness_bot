@@ -72,38 +72,7 @@ class FlowHandler:
 
     # ... (rest of handle_message)
 
-    def start_booking_flow(self, phone):
-        # 1. Send Images for Context
-        counselors = self.sheets.get_active_counselors()
-        if not counselors:
-             self.wa_api.send_text(phone, "No counselors available.")
-             return {"status": "no_counselors"}
-
-        for c in counselors:
-            if c.get('image_url'):
-                caption = f"*{c['name']}*\n{c['description']}"
-                self.wa_api.send_image(phone, c['image_url'], caption)
-            # Small delay usually handled by network, but we send sequentially
-
-        # 2. Send Selection List
-        rows = []
-        for c in counselors:
-            rows.append({
-                "id": str(c['id']),
-                "title": c['name'][:24],
-                "description": c['description'][:72]
-            })
-        
-        sections = [{"title": "Select Counselor", "rows": rows}]
-        self.wa_api.send_interactive_list(
-            phone,
-            "Tap below to choose your counselor:",
-            "View Counselors",
-            sections
-        )
-        
-        user_sessions[phone]["state"] = STATE_SELECT_COUNSELOR
-        return {"status": "sent_hybrid_flow"}
+        # (start_booking_flow moved to class level)
 
         elif current_state == STATE_SELECT_DATE:
             # Expecting Date (Today, Tomorrow, etc.)
