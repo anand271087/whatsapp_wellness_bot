@@ -64,19 +64,8 @@ class FlowHandler:
             
             if selected_counselor:
                 user_sessions[user_phone]["data"]["counselor_id"] = selected_counselor_id
-                
-                # Launch Flow for Date/Time context
-                flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
-                self.wa_api.send_flow_message(
-                    user_phone,
-                    flow_id,
-                    "Select Date & Time",
-                    f"Booking with {selected_counselor['name']}",
-                    "Please select your preferred date and time slot.",
-                    "Serenity Wellness Center",
-                    flow_data={"counselor_name": selected_counselor['name']}
-                )
-                return {"status": "sent_flow_date_selection"}
+                user_sessions[user_phone]["state"] = STATE_SELECT_DATE
+                return self.send_date_selection(user_phone)
             else:
                 self.wa_api.send_text(user_phone, "Invalid selection. Please select from the list.")
                 return {"status": "error"}
