@@ -157,5 +157,114 @@ def payment_webhook():
 
     return jsonify({"status": "ok"}), 200
 
+from utils.flow_encryption import decrypt_request, encrypt_response
+import base64
+
+@app.route("/flow", methods=["POST"])
+def flows():
+    # 1. Get Private Key
+    # In production, store this securely (Secret Manager or Env Var)
+    # For now, we'll look for 'private.pem' in root or env var
+    private_key = os.getenv("FLOW_PRIVATE_KEY")
+    if not private_key:
+        # Try reading from file
+        try:
+            with open("private.pem", "r") as f:
+                private_key = f.read()
+        except FileNotFoundError:
+            logger.error("Private Key not found!")
+            return jsonify({"error": "Configuration error"}), 500
+
+    # 2. Decrypt Request
+    try:
+        body = request.json
+        decrypted_payload, aes_key, iv = decrypt_request(body, private_key)
+        logger.info(f"Decrypted Flow Request: {json.dumps(decrypted_payload, indent=2)}")
+    except Exception as e:
+        logger.error(f"Decryption failed: {e}")
+        return jsonify({"error": "Decryption failed"}), 401
+
+    action = decrypted_payload.get("action")
+    
+    response_payload = {}
+    
+    # 3. Handle Actions
+    if action == "ping":
+        response_payload = {
+            "data": {
+                "status": "active"
+            }
+        }
+        # Ping response is NOT encrypted
+        return jsonify(response_payload)
+
+    elif action == "INIT":
+        # Fetch dynamic data for the first screen
+        counselors = sheets_service.get_active_counselors()
+        
+        # Format for Flow: Flat list for fixed slots
+        counselor_data = []
+        for c in counselors:
+            counselor_data.append({
+                "id": str(c['id']),
+                "title": c['name'],
+                "description": c['description'],
+                "image_url": c['image_url'] 
+            })
+            
+        # Ensure we fill at least the slots we have in JSON (e.g. 2-3) or handle in UI
+        # Pass the array, schema references it via index
+        
+        response_payload = {
+            "screen": "COUNSELOR_SELECTION", 
+            "data": {
+                "counselors": counselor_data
+            }
+        }
+        
+    elif action == "data_exchange":
+        # Handle actions from the Flow
+        request_data = decrypted_payload.get("data", {})
+        payload = decrypted_payload
+        
+        # Check specific action if nested in payload (depending on client implementation)
+        # Standard: payload is the request body. 
+        # But 'on-click-action' payload merges into the data_exchange request structure?
+        # Actually: request structure is { "action": "data_exchange", "data": { ... payload fields ... }, ... }
+        
+        custom_action = request_data.get("action")
+        
+        if custom_action == "select_counselor":
+            counselor_id = request_data.get("counselor_id")
+            
+            # Transition to Next Screen
+            response_payload = {
+                "screen": "DATE_SELECTION",
+                "data": {
+                    "counselor_id": counselor_id
+                }
+            }
+        else:
+            # Default or completion
+            response_payload = {
+                "screen": "SUCCESS", 
+                "data": {}
+            }
+        
+    else:
+        logger.warning(f"Unknown Flow Action: {action}")
+        return jsonify({"error": "Unknown action"}), 400
+
+    # 4. Encrypt Response
+    try:
+        encrypted_b64, iv_b64 = encrypt_response(response_payload, aes_key, iv)
+        return jsonify({
+            "encrypted_response": encrypted_b64,
+            "initial_vector": iv_b64
+        })
+    except Exception as e:
+        logger.error(f"Encryption failed: {e}")
+        return jsonify({"error": "Encryption failed"}), 500
+
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
