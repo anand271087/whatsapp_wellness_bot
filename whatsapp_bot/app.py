@@ -166,6 +166,10 @@ def flows():
     # In production, store this securely (Secret Manager or Env Var)
     # For now, we'll look for 'private.pem' in root or env var
     private_key = os.getenv("FLOW_PRIVATE_KEY")
+    if private_key:
+        # Fix formatting: Replace literal \n with actual newlines if pasted as single string
+        private_key = private_key.replace('\\n', '\n')
+    
     if not private_key:
         # Try reading from file
         try:
