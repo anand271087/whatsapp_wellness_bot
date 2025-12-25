@@ -200,8 +200,6 @@ def flows():
                 "status": "active"
             }
         }
-        # Ping response is NOT encrypted
-        return jsonify(response_payload)
 
     elif action == "INIT":
         # Fetch counselors for 'COUNSELLOR_SELECT' screen
