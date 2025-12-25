@@ -245,11 +245,13 @@ def flows():
 
     # 4. Encrypt Response
     try:
-        encrypted_b64, iv_b64 = encrypt_response(response_payload, aes_key, iv)
-        return jsonify({
-            "encrypted_response": encrypted_b64,
-            "initial_vector": iv_b64
-        })
+        # Returns single base64 string (IV + Ciphertext + Tag)
+        encrypted_b64 = encrypt_response(response_payload, aes_key, iv)
+        
+        # Return as raw text/plain
+        from flask import Response
+        return Response(encrypted_b64, status=200, mimetype='text/plain')
+        
     except Exception as e:
         logger.error(f"Encryption failed: {e}")
         return jsonify({"error": "Encryption failed"}), 500

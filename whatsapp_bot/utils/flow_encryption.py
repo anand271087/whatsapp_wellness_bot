@@ -112,4 +112,7 @@ def encrypt_response(response_data, aes_key, iv):
     # Append tag to ciphertext
     encrypted_data = ciphertext + encryptor.tag
     
-    return base64.b64encode(encrypted_data).decode('utf-8'), base64.b64encode(response_iv).decode('utf-8')
+    # Prepend IV to the result
+    final_payload = response_iv + encrypted_data
+    
+    return base64.b64encode(final_payload).decode('utf-8')
