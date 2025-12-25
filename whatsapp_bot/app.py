@@ -60,6 +60,7 @@ def webhook():
                 messages = value.get('messages', [])
                 
                 if messages:
+                    response = None
                     msg = messages[0]
                     from_number = msg.get('from') # User Phone
                     msg_type = msg.get('type')
@@ -76,7 +77,7 @@ def webhook():
                             nfm_reply = interactive.get('nfm_reply', {})
                             flow_response = json.loads(nfm_reply.get('response_json', '{}'))
                             logger.info(f"Flow Response: {flow_response}")
-                            flow_handler.process_flow_booking(from_number, flow_response)
+                            response = flow_handler.process_flow_booking(from_number, flow_response)
                             # Don't process as regular message
                             msg_body = None
                         else:
@@ -90,7 +91,8 @@ def webhook():
                     
                     # For MVP: Log the response we WOULD send
                     # In real app: call send_message(from_number, response)
-                    logger.info(f"TO USER {from_number}: {response}")
+                    if response:
+                        logger.info(f"TO USER {from_number}: {response}")
                     
             except Exception as e:
                 logger.error(f"Error processing webhook: {e}")
