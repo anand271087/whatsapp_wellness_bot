@@ -177,12 +177,16 @@ class WhatsAppAPI:
         }
         return self.send_message(to_phone, payload)
     
-    def send_flow_message(self, to_phone, flow_id, flow_cta, header_text, body_text, footer_text=None):
+    def send_flow_message(self, to_phone, flow_id, flow_cta, header_text, body_text, footer_text=None, flow_data=None):
         """
-        Send a WhatsApp Flow message
-        flow_id: The ID of the uploaded Flow (from Meta Business Manager)
-        flow_cta: Call-to-action button text (e.g., "Book Appointment")
+        Send a WhatsApp Flow message with optional data context
         """
+        flow_action_payload = {
+            "screen": "DATE_SELECTION"
+        }
+        if flow_data:
+            flow_action_payload["data"] = flow_data
+
         interactive_obj = {
             "type": "flow",
             "header": {
@@ -200,9 +204,7 @@ class WhatsAppAPI:
                     "flow_id": flow_id,
                     "flow_cta": flow_cta,
                     "flow_action": "navigate",
-                    "flow_action_payload": {
-                        "screen": "APPOINTMENT_FORM"
-                    }
+                    "flow_action_payload": flow_action_payload
                 }
             }
         }

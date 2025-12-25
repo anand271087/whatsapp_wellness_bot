@@ -55,18 +55,66 @@ class FlowHandler:
             return {"status": "ignored_no_command"}
 
         elif current_state == STATE_SELECT_COUNSELOR:
-            # Expecting Counselor Selection (ID from interactive list)
+            # Expecting Counselor Selection ID from Interactive List
             selected_counselor_id = message_body.strip()
-            # Validate that it's a valid counselor ID
+            
+            # Validate ID
             counselors = self.sheets.get_active_counselors()
-            valid_ids = [str(c['id']) for c in counselors]
-            if selected_counselor_id in valid_ids:
+            selected_counselor = next((c for c in counselors if str(c['id']) == selected_counselor_id), None)
+            
+            if selected_counselor:
                 user_sessions[user_phone]["data"]["counselor_id"] = selected_counselor_id
-                user_sessions[user_phone]["state"] = STATE_SELECT_DATE
-                return self.send_date_selection(user_phone)
+                
+                # Launch Flow for Date/Time context
+                flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
+                self.wa_api.send_flow_message(
+                    user_phone,
+                    flow_id,
+                    "Select Date & Time",
+                    f"Booking with {selected_counselor['name']}",
+                    "Please select your preferred date and time slot.",
+                    "Serenity Wellness Center",
+                    flow_data={"counselor_name": selected_counselor['name']}
+                )
+                return {"status": "sent_flow_date_selection"}
             else:
-                self.wa_api.send_text(user_phone, "Invalid selection. Please select a counselor from the list provided.")
-                return {"status": "error", "msg": "invalid_selection"}
+                self.wa_api.send_text(user_phone, "Invalid selection. Please select from the list.")
+                return {"status": "error"}
+
+    # ... (rest of handle_message)
+
+    def start_booking_flow(self, phone):
+        # 1. Send Images for Context
+        counselors = self.sheets.get_active_counselors()
+        if not counselors:
+             self.wa_api.send_text(phone, "No counselors available.")
+             return {"status": "no_counselors"}
+
+        for c in counselors:
+            if c.get('image_url'):
+                caption = f"*{c['name']}*\n{c['description']}"
+                self.wa_api.send_image(phone, c['image_url'], caption)
+            # Small delay usually handled by network, but we send sequentially
+
+        # 2. Send Selection List
+        rows = []
+        for c in counselors:
+            rows.append({
+                "id": str(c['id']),
+                "title": c['name'][:24],
+                "description": c['description'][:72]
+            })
+        
+        sections = [{"title": "Select Counselor", "rows": rows}]
+        self.wa_api.send_interactive_list(
+            phone,
+            "Tap below to choose your counselor:",
+            "View Counselors",
+            sections
+        )
+        
+        user_sessions[phone]["state"] = STATE_SELECT_COUNSELOR
+        return {"status": "sent_hybrid_flow"}
 
         elif current_state == STATE_SELECT_DATE:
             # Expecting Date (Today, Tomorrow, etc.)
