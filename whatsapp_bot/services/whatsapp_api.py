@@ -141,6 +141,7 @@ class WhatsAppAPI:
             "action": {
                 "name": "flow",
                 "parameters": {
+                    "mode": "draft",
                     "flow_message_version": "3",
                     "flow_token": str(uuid.uuid4()),
                     "flow_id": flow_id,
