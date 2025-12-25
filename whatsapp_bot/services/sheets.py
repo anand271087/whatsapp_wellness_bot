@@ -82,8 +82,28 @@ class GoogleSheetsService:
 
     def get_active_counselors(self):
         sheet = self.spreadsheet.worksheet('Counselors')
-        records = sheet.get_all_records()
-        return [r for r in records if str(r.get('is_active')).upper() == 'TRUE']
+        # get_all_records() fails if headers are duplicate/empty
+        rows = sheet.get_all_values()
+        
+        # Skip header
+        if len(rows) < 2:
+            return []
+            
+        counselors = []
+        # Columns: id(0), name(1), image_url(2), description(3), is_active(4)
+        for r in rows[1:]:
+            if len(r) < 5: continue
+            
+            # Check is_active (col 4)
+            if str(r[4]).strip().upper() == 'TRUE':
+                counselors.append({
+                    'id': r[0],
+                    'name': r[1],
+                    'image_url': r[2],
+                    'description': r[3],
+                    'is_active': r[4]
+                })
+        return counselors
 
     def get_bookings_for_date(self, date_str, counselor_id):
         sheet = self.spreadsheet.worksheet('Bookings')
