@@ -163,6 +163,7 @@ import base64
 
 @app.route("/flow", methods=["POST"])
 def flows():
+    logger.info("🔥 FLOW ENDPOINT HIT! Processing incoming request...")
     # 1. Get Private Key
     # In production, store this securely (Secret Manager or Env Var)
     # For now, we'll look for 'private.pem' in root or env var
