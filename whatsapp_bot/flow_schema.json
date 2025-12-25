@@ -1,44 +1,31 @@
 {
-    "version": "7.3",
+    "version": "3.0",
     "screens": [
         {
-            "id": "APPOINTMENT_FORM",
-            "title": "Book Appointment",
+            "id": "DATE_SELECTION",
+            "title": "Date & Time",
             "terminal": true,
             "success": true,
-            "data": {},
+            "data": {
+                "counselor_name": {
+                    "type": "string",
+                    "__example__": "Dr. Smith"
+                }
+            },
             "layout": {
                 "type": "SingleColumnLayout",
                 "children": [
                     {
                         "type": "Form",
-                        "name": "appointment_form",
+                        "name": "date_form",
                         "children": [
                             {
                                 "type": "TextHeading",
-                                "text": "Select Your Counselor"
+                                "text": "Booking for ${data.counselor_name}"
                             },
                             {
-                                "type": "RadioButtonsGroup",
-                                "name": "counselor_id",
-                                "label": "Counselor",
-                                "required": true,
-                                "data-source": [
-                                    {
-                                        "id": "1",
-                                        "title": "Dr. Smith",
-                                        "description": "Expert Psychologist"
-                                    },
-                                    {
-                                        "id": "2",
-                                        "title": "Dr. Jane",
-                                        "description": "Wellness Coach"
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "TextHeading",
-                                "text": "Select Date & Time"
+                                "type": "TextSubheading",
+                                "text": "Select your preferred date and time."
                             },
                             {
                                 "type": "DatePicker",
@@ -80,11 +67,10 @@
                             },
                             {
                                 "type": "Footer",
-                                "label": "Complete",
+                                "label": "Confirm Booking",
                                 "on-click-action": {
                                     "name": "complete",
                                     "payload": {
-                                        "counselor_id": "${form.counselor_id}",
                                         "appointment_date": "${form.appointment_date}",
                                         "time_slot": "${form.time_slot}"
                                     }
