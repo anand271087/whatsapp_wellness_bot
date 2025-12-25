@@ -248,6 +248,7 @@ def process_flow_request(body):
         return jsonify({"error": "Unknown action"}), 400
 
     # 4. Encrypt Response
+    logger.info(f"Flow Response Payload: {json.dumps(response_payload)}")   
     try:
         encrypted_b64 = encrypt_response(response_payload, aes_key, iv)
         from flask import Response
