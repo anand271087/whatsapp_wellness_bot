@@ -2,15 +2,13 @@
     "version": "7.3",
     "data_api_version": "3.0",
     "routing_model": {
-        "COUNSELLOR_SELECT": [
-            "CONFIRM"
-        ],
-        "CONFIRM": []
+        "COUNSELLOR_SELECT": []
     },
     "screens": [
         {
             "id": "COUNSELLOR_SELECT",
             "title": "Choose Counsellor",
+            "terminal": true,
             "data": {
                 "department": {
                     "type": "array",
@@ -22,23 +20,17 @@
                             },
                             "title": {
                                 "type": "string"
-                            },
-                            "image": {
-                                "type": "string",
-                                "format": "uri"
                             }
                         }
                     },
                     "__example__": [
                         {
                             "id": "Anand",
-                            "title": "Anand",
-                            "image": "https://i.ibb.co/R4h8Mbr2/850-1045-copy-comp.jpg"
+                            "title": "Anand"
                         },
                         {
                             "id": "Sachin",
-                            "title": "Sachin",
-                            "image": "https://i.ibb.co/R4h8Mbr2/850-1045-copy-comp.jpg"
+                            "title": "Sachin"
                         }
                     ]
                 }
@@ -59,46 +51,15 @@
                             },
                             {
                                 "type": "Footer",
-                                "label": "Confirm",
+                                "label": "Done",
                                 "on-click-action": {
-                                    "name": "navigate",
-                                    "next": {
-                                        "type": "screen",
-                                        "name": "CONFIRM"
-                                    },
-                                    "payload": {}
+                                    "name": "complete",
+                                    "payload": {
+                                        "counsellor": "${form.department}"
+                                    }
                                 }
                             }
                         ]
-                    }
-                ]
-            }
-        },
-        {
-            "id": "CONFIRM",
-            "title": "Confirmed",
-            "terminal": true,
-            "data": {},
-            "layout": {
-                "type": "SingleColumnLayout",
-                "children": [
-                    {
-                        "type": "TextHeading",
-                        "text": "Confirm Selection"
-                    },
-                    {
-                        "type": "TextBody",
-                        "text": "Please confirm your choice."
-                    },
-                    {
-                        "type": "Footer",
-                        "label": "Done",
-                        "on-click-action": {
-                            "name": "data_exchange",
-                            "payload": {
-                                "counsellor": "DEBUG_ID"
-                            }
-                        }
                     }
                 ]
             }
