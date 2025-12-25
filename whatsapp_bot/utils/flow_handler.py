@@ -53,13 +53,7 @@ class FlowHandler:
             # else: ignore non-commands in START state to avoid spam loop
             return {"status": "ignored_no_command"}
 
-        # (start_booking_flow moved to class level)
 
-        elif current_state == STATE_SELECT_DATE:
-
-    # ... (rest of handle_message)
-
-        # (start_booking_flow moved to class level)
 
         elif current_state == STATE_SELECT_DATE:
             # Expecting Date (Today, Tomorrow, etc.)
