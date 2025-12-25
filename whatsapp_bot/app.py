@@ -249,7 +249,7 @@ def flows():
                 "extension_message_response": {
                     "params": {
                         "flow_token": decrypted_payload.get("flow_token"),
-                        "counsellor_id": request_data.get("counsellor")
+                        "counsellor_id": request_data.get("counsellor") if request_data.get("counsellor") != "DEBUG_ID" else "1"
                     }
                 }
             }
