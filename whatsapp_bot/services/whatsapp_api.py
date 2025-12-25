@@ -199,9 +199,8 @@ class WhatsAppAPI:
             "action": {
                 "name": "flow",
                 "parameters": {
-                    "mode": "draft", # CRITICAL: Needed for testing draft flows
                     "flow_message_version": "3",
-                    "flow_token": "FLOW_TOKEN_123", # Needs a static token
+                    "flow_token": str(uuid.uuid4()),
                     "flow_id": flow_id,
                     "flow_cta": flow_cta,
                     "flow_action": "navigate",
