@@ -210,7 +210,8 @@ def flows():
         for c in counselors:
             department_data.append({
                 "id": str(c['id']),
-                "title": str(c['name'])
+                "title": str(c['name']),
+                "image": c['image_url'] if c.get('image_url') else "https://via.placeholder.com/150"
             })
             
         # Fallback if empty (Debugging)
@@ -218,7 +219,8 @@ def flows():
             logger.warning("No counselors found in Sheet! Adding dummy data.")
             department_data.append({
                 "id": "DUMMY",
-                "title": "Dr. Placeholder"
+                "title": "Dr. Placeholder",
+                "image": "https://via.placeholder.com/150"
             })
         
         logger.info(f"INIT Payload Data (Department): {json.dumps(department_data)}")
