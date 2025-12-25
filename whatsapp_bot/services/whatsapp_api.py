@@ -182,7 +182,7 @@ class WhatsAppAPI:
         Send a WhatsApp Flow message with optional data context
         """
         flow_action_payload = {
-            "screen": "DATE_SELECTION"
+            "screen": "COUNSELLOR_SELECT" 
         }
         if flow_data:
             flow_action_payload["data"] = flow_data
@@ -199,8 +199,9 @@ class WhatsAppAPI:
             "action": {
                 "name": "flow",
                 "parameters": {
+                    "mode": "draft", # CRITICAL: Needed for testing draft flows
                     "flow_message_version": "3",
-                    "flow_token": "FLOW_TOKEN",
+                    "flow_token": "FLOW_TOKEN_123", # Needs a static token
                     "flow_id": flow_id,
                     "flow_cta": flow_cta,
                     "flow_action": "navigate",
