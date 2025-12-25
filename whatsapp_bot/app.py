@@ -217,7 +217,9 @@ def flows():
         response_payload = {
             "screen": "COUNSELLOR_SELECT", 
             "data": {
-                "department": department_data
+                "department": department_data,
+                "counsellor": department_data,   # Alias for safety
+                "counselors": department_data    # Alias for safety
             }
         }
         
