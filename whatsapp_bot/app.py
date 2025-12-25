@@ -46,6 +46,10 @@ def webhook():
         # Handle Incoming Message
         data = request.json
         if data:
+            # 1. Check if this is a FLOW Data Request
+            if "encrypted_flow_data" in data:
+                return process_flow_request(data)
+
             logger.info(f"Received JSON: {data}")
             # Process standard WhatsApp Message Structure
             # Note: This parsing depends on the specific API provider structure (Meta Cloud API).
@@ -163,17 +167,17 @@ import base64
 
 @app.route("/flow", methods=["POST"])
 def flows():
-    logger.info("🔥 FLOW ENDPOINT HIT! Processing incoming request...")
+    return process_flow_request(request.json)
+
+def process_flow_request(body):
+    logger.info("🔥 FLOW LOGIC HIT (via Webhook or Flow Endpoint)!")
+    
     # 1. Get Private Key
-    # In production, store this securely (Secret Manager or Env Var)
-    # For now, we'll look for 'private.pem' in root or env var
     private_key = os.getenv("FLOW_PRIVATE_KEY")
     if private_key:
-        # Fix formatting: Replace literal \n with actual newlines if pasted as single string
         private_key = private_key.replace('\\n', '\n')
     
     if not private_key:
-        # Try reading from file
         try:
             with open("private.pem", "r") as f:
                 private_key = f.read()
@@ -183,7 +187,6 @@ def flows():
 
     # 2. Decrypt Request
     try:
-        body = request.json
         decrypted_payload, aes_key, iv = decrypt_request(body, private_key)
         logger.info(f"Decrypted Flow Request: {json.dumps(decrypted_payload, indent=2)}")
     except Exception as e:
@@ -191,22 +194,14 @@ def flows():
         return jsonify({"error": "Decryption failed"}), 401
 
     action = decrypted_payload.get("action")
-    
     response_payload = {}
     
     # 3. Handle Actions
     if action == "ping":
-        response_payload = {
-            "data": {
-                "status": "active"
-            }
-        }
+        response_payload = {"data": {"status": "active"}}
 
     elif action == "INIT":
-        # Fetch counselors for 'COUNSELLOR_SELECT' screen
         counselors = sheets_service.get_active_counselors()
-        
-        # Format for Flow Schema (id, title) - Removed image to prevent rendering issues
         department_data = []
         for c in counselors:
             department_data.append({
@@ -214,7 +209,6 @@ def flows():
                 "title": str(c['name'])
             })
             
-        # Fallback if empty (Debugging)
         if not department_data:
             logger.warning("No counselors found in Sheet! Adding dummy data.")
             department_data.append({
@@ -228,21 +222,15 @@ def flows():
             "screen": "COUNSELLOR_SELECT", 
             "data": {
                 "department": department_data,
-                "counsellor": department_data,   # Alias for safety
-                "counselors": department_data    # Alias for safety
+                "counsellor": department_data,
+                "counselors": department_data
             }
         }
         
     elif action == "data_exchange":
-        # Handle actions from the Flow
         request_data = decrypted_payload.get("data", {})
-        
-        # New Schema Transition: COUNSELLOR_SELECT -> CONFIRM
-        # Client sends: { "counsellor": "${form.department}" }
-        # Note: 'department' is the ID selected in dropdown
-        
         response_payload = {
-            "screen": "SUCCESS", # Close Flow
+            "screen": "SUCCESS", 
             "data": {
                 "extension_message_response": {
                     "params": {
@@ -259,13 +247,9 @@ def flows():
 
     # 4. Encrypt Response
     try:
-        # Returns single base64 string (IV + Ciphertext + Tag)
         encrypted_b64 = encrypt_response(response_payload, aes_key, iv)
-        
-        # Return as raw text/plain
         from flask import Response
         return Response(encrypted_b64, status=200, mimetype='text/plain')
-        
     except Exception as e:
         logger.error(f"Encryption failed: {e}")
         return jsonify({"error": "Encryption failed"}), 500
