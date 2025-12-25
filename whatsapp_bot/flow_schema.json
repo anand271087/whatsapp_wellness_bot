@@ -1,15 +1,46 @@
 {
-    "version": "3.0",
+    "version": "7.3",
+    "data_api_version": "3.0",
+    "routing_model": {
+        "COUNSELLOR_SELECT": [
+            "CONFIRM"
+        ],
+        "CONFIRM": []
+    },
     "screens": [
         {
-            "id": "DATE_SELECTION",
-            "title": "Date & Time",
-            "terminal": true,
-            "success": true,
+            "id": "COUNSELLOR_SELECT",
+            "title": "Choose Counsellor",
             "data": {
-                "counselor_name": {
-                    "type": "string",
-                    "__example__": "Dr. Smith"
+                "department": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "image": {
+                                "type": "string",
+                                "format": "uri"
+                            }
+                        }
+                    },
+                    "__example__": [
+                        {
+                            "id": "Anand",
+                            "title": "Anand",
+                            "image": "https://i.ibb.co/R4h8Mbr2/850-1045-copy-comp.jpg"
+                        },
+                        {
+                            "id": "Sachin",
+                            "title": "Sachin",
+                            "image": "https://i.ibb.co/R4h8Mbr2/850-1045-copy-comp.jpg"
+                        }
+                    ]
                 }
             },
             "layout": {
@@ -17,66 +48,57 @@
                 "children": [
                     {
                         "type": "Form",
-                        "name": "date_form",
+                        "name": "counsellor_form",
                         "children": [
                             {
-                                "type": "TextHeading",
-                                "text": "Booking for ${data.counselor_name}"
-                            },
-                            {
-                                "type": "TextSubheading",
-                                "text": "Select your preferred date and time."
-                            },
-                            {
-                                "type": "DatePicker",
-                                "name": "appointment_date",
-                                "label": "Preferred Date",
+                                "type": "Dropdown",
+                                "label": "Select Counsellor",
+                                "name": "department",
+                                "data-source": "${data.department}",
                                 "required": true
                             },
                             {
-                                "type": "Dropdown",
-                                "name": "time_slot",
-                                "label": "Time Slot",
-                                "required": true,
-                                "data-source": [
-                                    {
-                                        "id": "09:00",
-                                        "title": "9:00 AM"
-                                    },
-                                    {
-                                        "id": "10:00",
-                                        "title": "10:00 AM"
-                                    },
-                                    {
-                                        "id": "11:00",
-                                        "title": "11:00 AM"
-                                    },
-                                    {
-                                        "id": "14:00",
-                                        "title": "2:00 PM"
-                                    },
-                                    {
-                                        "id": "15:00",
-                                        "title": "3:00 PM"
-                                    },
-                                    {
-                                        "id": "16:00",
-                                        "title": "4:00 PM"
-                                    }
-                                ]
-                            },
-                            {
                                 "type": "Footer",
-                                "label": "Confirm Booking",
+                                "label": "Confirm",
                                 "on-click-action": {
-                                    "name": "complete",
-                                    "payload": {
-                                        "appointment_date": "${form.appointment_date}",
-                                        "time_slot": "${form.time_slot}"
-                                    }
+                                    "name": "navigate",
+                                    "next": {
+                                        "type": "screen",
+                                        "name": "CONFIRM"
+                                    },
+                                    "payload": {}
                                 }
                             }
                         ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "CONFIRM",
+            "title": "Confirmed",
+            "terminal": true,
+            "data": {},
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "TextHeading",
+                        "text": "Confirm Selection"
+                    },
+                    {
+                        "type": "TextBody",
+                        "text": "Please confirm your choice."
+                    },
+                    {
+                        "type": "Footer",
+                        "label": "Done",
+                        "on-click-action": {
+                            "name": "data_exchange",
+                            "payload": {
+                                "counsellor": "DEBUG_ID"
+                            }
+                        }
                     }
                 ]
             }
