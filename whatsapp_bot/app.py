@@ -214,6 +214,17 @@ def flows():
                 "image": c['image_url'] if c.get('image_url') else "https://via.placeholder.com/150"
             })
             
+        # Fallback if empty (Debugging)
+        if not department_data:
+            logger.warning("No counselors found in Sheet! Adding dummy data.")
+            department_data.append({
+                "id": "DUMMY",
+                "title": "Dr. Placeholder",
+                "image": "https://via.placeholder.com/150"
+            })
+        
+        logger.info(f"INIT Payload Data (Department): {json.dumps(department_data)}")
+            
         response_payload = {
             "screen": "COUNSELLOR_SELECT", 
             "data": {
