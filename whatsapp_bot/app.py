@@ -196,9 +196,7 @@ def flows():
     # 3. Handle Actions
     if action == "ping":
         response_payload = {
-            "data": {
-                "status": "active"
-            }
+            "status": "active"
         }
 
     elif action == "INIT":
