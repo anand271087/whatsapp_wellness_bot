@@ -138,6 +138,8 @@ class WhatsAppAPI:
             "body": {
                 "text": body_text
             },
+            "action": {
+                "name": "flow",
                 "parameters": {
                     "flow_message_version": "3",
                     "flow_token": str(uuid.uuid4()),
