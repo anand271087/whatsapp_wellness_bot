@@ -184,8 +184,7 @@ class FlowHandler:
             )
             user_sessions[phone] = {"state": STATE_START, "data": {}}
             return {"status": "booking_limit_reached"}
-        
-    def start_booking_flow(self, phone):
+            
         # 1. Launch Flow Directly for Counselor Selection
         flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
         
@@ -268,8 +267,8 @@ class FlowHandler:
     
     def process_flow_booking(self, phone, flow_data):
         """Process booking from WhatsApp Flow response"""
-        # New Flow returns: { "counsellor_id": "..." }
-        counselor_id = flow_data.get('counsellor_id') or flow_data.get('counselor_id')
+        # New Flow returns: { "counsellor": "..." }
+        counselor_id = flow_data.get('counsellor') or flow_data.get('counsellor_id') or flow_data.get('counselor_id')
         
         if not counselor_id:
             self.wa_api.send_text(phone, "Error: No counselor selected. Please try again.")
