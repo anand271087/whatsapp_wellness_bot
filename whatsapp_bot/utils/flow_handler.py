@@ -14,7 +14,6 @@ user_sessions = {}
 
 # States
 STATE_START = "START"
-STATE_SELECT_COUNSELOR = "SELECT_COUNSELOR"
 STATE_SELECT_DATE = "SELECT_DATE"
 STATE_SELECT_SLOT = "SELECT_SLOT"
 STATE_PAYMENT = "PAYMENT_PENDING"
@@ -54,32 +53,9 @@ class FlowHandler:
             # else: ignore non-commands in START state to avoid spam loop
             return {"status": "ignored_no_command"}
 
-        elif current_state == STATE_SELECT_COUNSELOR:
-            # Expecting Counselor Selection ID from Interactive List
-            selected_counselor_id = message_body.strip()
-            
-            # Validate ID
-            counselors = self.sheets.get_active_counselors()
-            selected_counselor = next((c for c in counselors if str(c['id']) == selected_counselor_id), None)
-            
-            if selected_counselor:
-                user_sessions[user_phone]["data"]["counselor_id"] = selected_counselor_id
-                
-                # Launch Flow for Date/Time context
-                flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
-                self.wa_api.send_flow_message(
-                    user_phone,
-                    flow_id,
-                    "Select Date & Time",
-                    f"Booking with {selected_counselor['name']}",
-                    "Please select your preferred date and time slot.",
-                    "Serenity Wellness Center",
-                    flow_data={"counselor_name": selected_counselor['name']}
-                )
-                return {"status": "sent_flow_date_selection"}
-            else:
-                self.wa_api.send_text(user_phone, "Invalid selection. Please select from the list.")
-                return {"status": "error"}
+        # (start_booking_flow moved to class level)
+
+        elif current_state == STATE_SELECT_DATE:
 
     # ... (rest of handle_message)
 

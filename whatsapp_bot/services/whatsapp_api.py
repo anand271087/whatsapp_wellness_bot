@@ -49,15 +49,6 @@ class WhatsAppAPI:
             "text": {"body": text}
         })
 
-    def send_image(self, to_phone, image_url, caption=None):
-        message_data = {
-            "type": "image",
-            "image": {"link": image_url}
-        }
-        if caption:
-            message_data["image"]["caption"] = caption
-        return self.send_message(to_phone, message_data)
-
     def send_interactive_list(self, to_phone, body_text, button_text, sections):
         """
         sections structure:
@@ -127,56 +118,6 @@ class WhatsAppAPI:
         }
         return self.send_message(to_phone, payload)
     
-    def send_interactive_carousel(self, to_phone, body_text, cards):
-        """
-        cards structure:
-        [
-            {
-                "image_url": "https://...",
-                "body_text": "Counselor Name",
-                "buttons": [{"id": "btn_id", "title": "Button Title"}]
-            }
-        ]
-        """
-        carousel_cards = []
-        for i, card in enumerate(cards):
-            c_buttons = []
-            for btn in card.get('buttons', []):
-                c_buttons.append({
-                    "type": "reply",
-                    "reply": {
-                        "id": btn['id'],
-                        "title": btn['title']
-                    }
-                })
-
-            carousel_cards.append({
-                "card_index": i,
-                "header": {
-                    "type": "image",
-                    "image": {"link": card['image_url']}
-                },
-                "body": {
-                    "text": card['body_text']
-                },
-                "action": {
-                    "buttons": c_buttons
-                }
-            })
-
-        payload = {
-            "type": "interactive",
-            "interactive": {
-                "type": "carousel",
-                "body": {
-                    "text": body_text
-                },
-                "action": {
-                    "cards": carousel_cards
-                }
-            }
-        }
-        return self.send_message(to_phone, payload)
     
     def send_flow_message(self, to_phone, flow_id, flow_cta, header_text, body_text, footer_text=None, flow_data=None):
         """
