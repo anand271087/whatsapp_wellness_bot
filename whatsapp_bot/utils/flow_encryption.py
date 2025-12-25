@@ -99,7 +99,7 @@ def encrypt_response(response_data, aes_key, iv):
     # It is recommended to use a random IV
     response_iv = os.urandom(12) 
     
-    json_data = json.dumps(response_data).encode('utf-8')
+    json_data = json.dumps(response_data, separators=(',', ':')).encode('utf-8')
     
     cipher = Cipher(
         algorithms.AES(aes_key),
