@@ -74,7 +74,7 @@ def webhook():
                         elif interactive.get('type') == 'nfm_reply':
                             # WhatsApp Flow response - process directly
                             nfm_reply = interactive.get('nfm_reply', {})
-                            flow_response = json.loads(nfm_reply.get('body', '{}'))
+                            flow_response = json.loads(nfm_reply.get('response_json', '{}'))
                             logger.info(f"Flow Response: {flow_response}")
                             flow_handler.process_flow_booking(from_number, flow_response)
                             # Don't process as regular message
