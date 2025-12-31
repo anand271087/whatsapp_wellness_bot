@@ -188,13 +188,34 @@ class FlowHandler:
         # 1. Launch Flow Directly for Counselor Selection
         flow_id = os.getenv("WHATSAPP_FLOW_ID", "1540958807595575")
         
+        # 2. Pre-fetch Data to bypass INIT (Performance & Stability)
+        counselors = self.sheets.get_active_counselors()
+        department_data = []
+        for c in counselors:
+            department_data.append({
+                "id": str(c['id']),
+                "title": str(c['name'])
+            })
+            
+        if not department_data:
+            department_data.append({
+                "id": "DUMMY", 
+                "title": "Dr. Placeholder"
+            })
+            
+        # Structure matches the Schema's "data" property requirement
+        flow_data = {
+            "department": department_data
+        }
+        
         self.wa_api.send_flow_message(
             phone,
             flow_id,
             "Book Appointment",
             "Book Your Session",
             "Select your counselor and schedule your appointment.",
-            "Serenity Wellness Center"
+            "Serenity Wellness Center",
+            flow_data=flow_data
         )
         
         # We don't set local state yet, we wait for flow completion

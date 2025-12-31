@@ -48,6 +48,7 @@ def webhook():
         if data:
             # 1. Check if this is a FLOW Data Request
             if "encrypted_flow_data" in data:
+                logger.info("🔥 encrypted_flow_data Endpoint Hit!")
                 return process_flow_request(data)
 
             logger.info(f"Received JSON: {data}")
